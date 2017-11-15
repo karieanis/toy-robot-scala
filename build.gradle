@@ -1,0 +1,79 @@
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+}
+
+plugins {
+    id 'scala'
+    id 'idea'
+    id 'application'
+}
+
+group 'com.rea'
+version '1.0-SNAPSHOT'
+
+task wrapper(type: Wrapper) {
+  gradleVersion = '3.3'
+  distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+project.ext {
+    antlrVersion = '4.7'
+    grammarpackage = 'com.rea.simulation.parser.generated'
+    antlrSource = 'src/main/antlr'
+    antlrDestinationDir = 'src/main/java/com/rea/simulation/parser/generated'
+}
+
+repositories {
+    maven { url 'http://repo1.maven.org/maven2' }
+}
+
+configurations {
+    antlr4 {  description = "ANTLR4" }
+}
+
+dependencies {
+    compile group: 'org.scala-lang', name: 'scala-library', version: '2.12.4'
+
+    compile group: 'com.typesafe.scala-logging', name: 'scala-logging_2.12', version: '3.7.1'
+    compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
+
+    compile group:'org.antlr', name:'antlr4-runtime', version: antlrVersion
+    runtime group:'org.antlr', name: 'stringtemplate', version: '3.2.1'
+    antlr4 group: 'org.antlr', name: 'antlr4', version: antlrVersion
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile group: 'org.scalatest', name: 'scalatest_2.12', version: '3.0.4'
+}
+
+task antlrOutputDir {
+    doLast {
+        mkdir(antlrDestinationDir)
+    }
+}
+
+task generateGrammarSource(dependsOn: antlrOutputDir, type: JavaExec) {
+    description = 'Generates Java sources from ANTLR4 grammars.'
+
+    inputs.dir file(antlrSource)
+    outputs.dir file(antlrDestinationDir)
+
+    def grammars = fileTree(antlrSource).include('**/*.g4')
+
+    main = 'org.antlr.v4.Tool'
+    classpath = configurations.antlr4
+    def pkg = grammarpackage.replaceAll("\\.", "/")
+    args = ["-o", "${antlrDestinationDir}"/*, "-atn"*/, "-listener", "-visitor", "-package", grammarpackage, grammars.files].flatten()
+
+}
+
+compileJava {
+    dependsOn generateGrammarSource
+    source antlrDestinationDir
+}
