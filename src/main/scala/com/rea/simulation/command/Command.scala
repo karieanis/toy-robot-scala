@@ -2,33 +2,63 @@ package com.rea.simulation.command
 
 import com.rea.simulation.model.{Direction, Orientation, Point}
 import com.rea.simulation.model.mutable.{Robot, World}
+import com.typesafe.scalalogging.LazyLogging
 
 object Command {
+  /**
+    * Evaluation logic for executing a provided function given the existence of a robot. Non-existence results
+    * in a warning being logged.
+    */
+  private object ConditionalOnRobot extends LazyLogging {
+    def executeIfPresent(maybeRobot:Option[Robot])(f: => Unit): Unit = {
+      maybeRobot match {
+        case Some(actual) => f
+        case None => logger.warn("Ignored as robot does not exist within the world")
+      }
+    }
+  }
+
+  /**
+    * Evaluation logic for executing a provided function given a two dimensional space existing with a world.
+    * Spaces outside the bounds of the world are logged as a warning.
+    */
+  private object ConditionalOnWithinWorld extends LazyLogging {
+    def executeIfValid(location:Point, world:World)(f: => Unit): Unit = {
+      if(location within world) {
+        f
+      } else {
+        logger.warn(
+          s"Ignored as requested location x:${location.x}, y:${location.y} is outside the bounds of the " +
+          s"world x:${world.xAxisBounds.min}..${world.xAxisBounds.max}, y:${world.yAxisBounds.min}..${world.yAxisBounds.max}")
+      }
+    }
+  }
 
   /**
     * A command implementation which will move a robot one position in two dimensional space relative
     * to it's current orientation. If no robot exists in the world, the command is ignored
     */
-  private case class Move() extends Command with ConstrainedMovement {
-    override def execute(world:World): Unit = {
-      world.robot.foreach(
-        actual => {
-          move(
-            actual.orientation match {
-              case Orientation.NORTH | Orientation.SOUTH => actual.location.copy(
-                actual.location.x,
-                reposition(actual.orientation, actual.location.y)
-              )
-              case Orientation.EAST  | Orientation.WEST  => actual.location.copy(
-                reposition(actual.orientation, actual.location.x),
-                actual.location.y
-              )
-            },
-            actual,
-            world
-          )
-        }
-      )
+  private case class Move() extends Command with Movement {
+    override def execute(world:World):Unit = ConditionalOnRobot.executeIfPresent(world.robot) {
+      world.robot match {
+        case Some(actual) =>
+          val location = actual.orientation match {
+            case Orientation.NORTH | Orientation.SOUTH => actual.location.copy(
+              actual.location.x,
+              reposition(actual.orientation, actual.location.y)
+            )
+            case Orientation.EAST  | Orientation.WEST  => actual.location.copy(
+              reposition(actual.orientation, actual.location.x),
+              actual.location.y
+            )
+          }
+
+          ConditionalOnWithinWorld.executeIfValid(location, world) {
+            move(location, actual)
+          }
+
+        case None => // ignore
+      }
     }
 
     /**
@@ -59,23 +89,16 @@ object Command {
     * @param location     A point within two dimensional space
     * @param orientation  An orientation
     */
-  private case class Place(location:Point, orientation:Orientation) extends Command {
-    override def execute(world:World): Unit = {
-      // if the location exists within the simulation
-      if(location within world) {
-        world.robot.map(
-          // if the robot already exists, update the location and orientation
-          actual => {
-            actual.location    = location
-            actual.orientation = orientation
-
-            actual
-          }
-        ).getOrElse {
+  private case class Place(location:Point, orientation:Orientation) extends Command with Movement with LazyLogging {
+    override def execute(world:World): Unit = ConditionalOnWithinWorld.executeIfValid(location, world) {
+      world.robot match {
+        case Some(actual) =>
+          move(location, actual)
+          actual.orientation = orientation
+        case None =>
           // robot doesn't exist yet, create and add to the simulation
           val robot = Robot(location, orientation)
           world.robot = Option(robot)
-        }
       }
     }
   }
@@ -85,8 +108,11 @@ object Command {
     * dimensional space
     */
   private case class Report() extends Command {
-    override def execute(world:World): Unit = {
-      world.robot.foreach(actual => Console.println(s"${actual.location.x},${actual.location.y},${actual.orientation}"))
+    override def execute(world:World): Unit = ConditionalOnRobot.executeIfPresent(world.robot) {
+      world.robot match {
+        case Some(actual) => Console.println(s"${actual.location.x},${actual.location.y},${actual.orientation}")
+        case None => // ignore
+      }
     }
   }
 
@@ -97,23 +123,18 @@ object Command {
     * @param direction  A direction used to determine the new orientation of a robot
     */
   private case class Turn(direction:Direction) extends Command with Reorientation {
-    override def execute(world:World): Unit = {
-      world.robot.foreach(actual => world.robot = Option(reorient(actual, direction)))
+    override def execute(world:World): Unit = ConditionalOnRobot.executeIfPresent(world.robot) {
+      world.robot = Option(reorient(world.robot.get, direction))
     }
   }
+
 
   /**
     * A trait which allows for constrained movement of a robot within the bounds of the two dimensional
     * space available within the provided world.
     */
-  sealed trait ConstrainedMovement {
-    def move(location: Point, robot: Robot, world: World): Unit = {
-      if (location within world) {
-        move(location, robot)
-      }
-    }
-
-    private def move(location:Point, robot: Robot): Unit = {
+  sealed trait Movement extends LazyLogging {
+     def move(location:Point, robot: Robot): Unit = {
       robot.location = location
     }
   }

@@ -4,12 +4,18 @@ buildscript {
             url "https://plugins.gradle.org/m2/"
         }
     }
+
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1'
+    }
 }
 
 plugins {
     id 'scala'
     id 'idea'
     id 'application'
+
+    id 'com.github.johnrengelman.shadow' version '2.0.1'
 }
 
 group 'com.rea'
@@ -39,6 +45,22 @@ repositories {
 
 configurations {
     antlr4 {  description = "ANTLR4" }
+}
+
+jar {
+    manifest {
+        attributes "Implementation-Title": applicationName
+        attributes "Main-Class": mainClassName
+    }
+}
+
+shadowJar {
+    zip64 true
+
+    mergeServiceFiles()
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
 }
 
 dependencies {
@@ -74,8 +96,12 @@ task generateGrammarSource(dependsOn: antlrOutputDir, type: JavaExec) {
     main = 'org.antlr.v4.Tool'
     classpath = configurations.antlr4
     def pkg = grammarpackage.replaceAll("\\.", "/")
-    args = ["-o", "${antlrDestinationDir}"/*, "-atn"*/, "-listener", "-visitor", "-package", grammarpackage, grammars.files].flatten()
+    args = ["-o", "${antlrDestinationDir}", "-listener", "-visitor", "-package", grammarpackage, grammars.files].flatten()
 
+}
+
+run {
+    standardInput = System.in
 }
 
 compileJava {
