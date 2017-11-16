@@ -2,8 +2,11 @@ package com.rea.simulation.command
 
 import com.rea.simulation.model.{Orientation, Point}
 import com.rea.simulation.model.mutable.{Robot, World}
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FlatSpec, Matchers}
 
+@RunWith(classOf[JUnitRunner])
 class PlaceSpec extends FlatSpec with Matchers {
   "A request to place a robot outside the bounds of the world" should "be ignored" in {
     val world = World(1,1)

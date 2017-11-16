@@ -2,15 +2,15 @@ grammar SimulationCommand;
 
 instruction: command EOF ;
 command
-  : PLACE point COMMA orientation #PLACE
-  | MOVE   #MOVE
-  | turn   #TURN
-  | REPORT #REPORT
+  : PLACE point COMMA orientation #Place
+  | MOVE                          #Move
+  | direction                     #Turn
+  | REPORT                        #Report
   ;
 
 point: x COMMA y ;
 orientation: NORTH | SOUTH | EAST | WEST ;
-turn: LEFT | RIGHT ;
+direction: LEFT | RIGHT ;
 
 x: INT ;
 y: INT ;

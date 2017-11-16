@@ -2,8 +2,11 @@ package com.rea.simulation.command
 
 import com.rea.simulation.model.{Orientation, Point}
 import com.rea.simulation.model.mutable.{Robot, World}
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FlatSpec, Matchers}
 
+@RunWith(classOf[JUnitRunner])
 class MoveSpec extends FlatSpec with Matchers {
   val command: Command = Command.move()
 

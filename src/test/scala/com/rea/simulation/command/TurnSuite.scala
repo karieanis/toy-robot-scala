@@ -2,11 +2,14 @@ package com.rea.simulation.command
 
 import com.rea.simulation.model.{Direction, Orientation, Point}
 import com.rea.simulation.model.mutable.{Robot, World}
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FunSuite, Matchers}
 
 /**
   * Tests all combinations of turning possible
   */
+@RunWith(classOf[JUnitRunner])
 class TurnSuite extends FunSuite with Matchers {
   val left: Command  = Command.turn(Direction.LEFT)
   val right: Command = Command.turn(Direction.RIGHT)
