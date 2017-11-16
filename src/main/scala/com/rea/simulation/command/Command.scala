@@ -64,8 +64,7 @@ object Command {
     /**
       * Determine the new axis position for a move in accordance with the passed orientation. Assumes
       * the axis position is relevant to the orientation. Can provide axis locations which may be outside of
-      * the bounds of a world; as such, it is suggested that the result of this method should be used in conjunction
-      * with the `ConstrainedMovement` trait
+      * the bounds of a world.
       *
       * @param orientation    An orientation
       * @param axisIndex      An axis position
