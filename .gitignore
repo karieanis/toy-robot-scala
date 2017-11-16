@@ -1,4 +1,5 @@
 # Created by .ignore support plugin (hsz.mobi)
 /.idea/
-/gradle/
+/.gradle/
+/build/
 /src/main/java/com/rea/simulation/parser/generated/
