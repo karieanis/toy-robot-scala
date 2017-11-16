@@ -15,7 +15,7 @@ Tests are executed via gradle, and can be invoked as follows:
     
 ### Windows
 
-    gradlew test
+    gradlew.bat test
     
 
 Building
@@ -30,7 +30,7 @@ maven's fat jar implementation.
     
 ### Windows
 
-    gradlew shadowJar
+    gradlew.bat shadowJar
     
 By default, an uber jar will be built as build/libs/*-all.jar. For this particular project, the manufactured artefact will
 be robot-1.0-SNAPSHOT-all.jar.
