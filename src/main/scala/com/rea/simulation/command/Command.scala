@@ -38,7 +38,7 @@ object Command {
     * A command implementation which will move a robot one position in two dimensional space relative
     * to it's current orientation. If no robot exists in the world, the command is ignored
     */
-  private case class Move() extends Command with Movement {
+  private case object Move extends Command with Movement {
     override def execute(world:World):Unit = ConditionalOnRobot.executeIfPresent(world.robot) {
       world.robot match {
         case Some(actual) =>
@@ -106,7 +106,7 @@ object Command {
     * A command implementation which will report on the location and orientation of a robot within a two
     * dimensional space
     */
-  private case class Report() extends Command {
+  private case object Report extends Command {
     override def execute(world:World): Unit = ConditionalOnRobot.executeIfPresent(world.robot) {
       world.robot match {
         case Some(actual) => Console.println(s"${actual.location.x},${actual.location.y},${actual.orientation}")
@@ -126,7 +126,6 @@ object Command {
       world.robot = Option(reorient(world.robot.get, direction))
     }
   }
-
 
   /**
     * A trait which allows for constrained movement of a robot within the bounds of the two dimensional
@@ -172,9 +171,9 @@ object Command {
     }
   }
 
-  def move():Command = Move()
+  def move():Command = Move
   def place(location:Point, orientation: Orientation):Command = Place(location, orientation)
-  def report():Command = Report()
+  def report():Command = Report
   def turn(direction: Direction):Command = Turn(direction)
 }
 
